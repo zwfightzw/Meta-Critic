@@ -1,6 +1,6 @@
 # Meta-Critic  Network in RL
 
-PyTorch implementation of our NeurIPS 2020 paper `Online Meta-Critic Learning for Off-Policy Actor-Critic Methods'. This paper is located at http://arxiv.org/abs/2003.05334, and will appear in the forthcoming NeurIPS 2020.
+PyTorch implementation of our NeurIPS 2020 paper 'Online Meta-Critic Learning for Off-Policy Actor-Critic Methods'. This paper is located at http://arxiv.org/abs/2003.05334, and will appear in the forthcoming NeurIPS 2020.
 
 > Wei Zhou, Yiying Li, Yongxin Yang, Huaimin Wang, Timothy M. Hospedales. Online Meta-Critic Learning for Off-Policy Actor-Critic Methods. 
 34th Conference on Neural Information Processing Systems, 2020.
