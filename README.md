@@ -1,13 +1,23 @@
 # Meta-Critic  Network in RL
 
-PyTorch implementation of our NIPS 2020 paper on Online Meta-Critic Learning for Off-Policy Actor-Critic Methods.
+PyTorch implementation of our NeurIPS 2020 paper `Online Meta-Critic Learning for Off-Policy Actor-Critic Methods'. This paper is located at http://arxiv.org/abs/2003.05334, and will appear in the forthcoming NeurIPS 2020.
 
-Wei Zhou, Yiying Li, Yongxin Yang, Huaimin Wang, Timothy M. Hospedales. 
-Online Meta-Critic Learning for Off-Policy Actor-Critic Methods. 
-Advances in Neural Information Processing Systems 34 (NIPS 2020).
-http://arxiv.org/abs/2003.05334
+> Wei Zhou, Yiying Li, Yongxin Yang, Huaimin Wang, Timothy M. Hospedales. Online Meta-Critic Learning for Off-Policy Actor-Critic Methods. 
+34th Conference on Neural Information Processing Systems, 2020.
 
-Please cite this paper when using this code for your research.
+
+If you find Meta-Critic useful in your research, please consider citing:
+```
+  @inproceedings{Zhou2020NeurIPS,
+     Author={Zhou, Wei and Li, Yiying and Yang, Yongxin and Wang, Huaimin and Hospedales, Timothy M},
+     Title={Online Meta-Critic Learning for Off-Policy Actor-Critic Methods},
+     Booktitle={34th Conference on Neural Information Processing Systems},
+     Year={2020}
+  }
+```
+
+## Introduction
+Off-Policy Actor-Critic (Off-PAC) methods have proven successful in a variety of continuous control tasks. Normally, the critic's action-value function is updated using temporal-difference, and the critic in turn provides a loss for the actor that trains it to take actions with higher expected return. In this paper, we introduce a novel and flexible meta-critic that observes the learning process and meta-learns an additional loss for the actor that accelerates and improves actor-critic learning. Compared to the vanilla critic, the meta-critic network is explicitly trained to accelerate the learning process; and compared to existing meta-learning algorithms, meta-critic is rapidly learned online for a single task, rather than slowly over a family of tasks. Crucially, our meta-critic framework is designed for off-policy based learners, which currently provide state-of-the-art reinforcement learning sample efficiency. We demonstrate that online meta-critic learning leads to improvements in avariety of continuous control environments when combined with contemporary Off-PAC methods DDPG, TD3 and the state-of-the-art SAC. 
 
 # Getting Started
 
