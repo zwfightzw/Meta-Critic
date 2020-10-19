@@ -50,7 +50,7 @@ conda activate meta_critic
 ```
 
 ## Examples
-### Training and simulating policy agent of DDPG_MC
+### Training and simulating of DDPG_MC
 1.  Enter the directory of TD3_DDPG_MC
 
 ```
@@ -66,7 +66,7 @@ python main.py --env_name HalfCheetahEnv --method DDPG_MC --max_timesteps=3e6
 python main.py --env_name HalfCheetahEnv --method DDPG_MC_sa --max_timesteps=3e6
 ```
 
-### Training and simulating policy agent of TD3_MC
+### Training and simulating of TD3_MC
 1.  Enter the directory of TD3_DDPG_MC
 
 ```
@@ -82,7 +82,7 @@ python main.py --env_name HalfCheetahEnv --method TD3_MC --max_timesteps=3e6
 python main.py --env_name HalfCheetahEnv --method TD3_MC_sa --max_timesteps=3e6
 ```
 
-### Training and simulating policy agent of SAC_MC
+### Training and simulating of SAC_MC
 1.  Enter the directory of SAC_MC
 
 ```
