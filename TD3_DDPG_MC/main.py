@@ -51,6 +51,10 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=100, type=int)  # Batch size for both actor and critic
     parser.add_argument("--discount", default=0.99, type=float)  # Discount factor
     parser.add_argument("--tau", default=0.005, type=float)  # Target network update rate
+    parser.add_argument('--actor_lr', type=float, default=1e-3)  # learning rate
+    parser.add_argument('--critic_lr', type=float, default=1e-3)  # learning rate
+    parser.add_argument('--aux_lr', type=float, default=1e-3)  # learning rate
+    parser.add_argument('--weight_decay', type=float, default=1e-4)  # weight decay
     parser.add_argument("--policy_noise", default=0.2, type=float)  # Noise added to target policy during critic update
     parser.add_argument("--noise_clip", default=0.5, type=float)  # Range to clip target policy noise
     parser.add_argument("--policy_freq", default=2, type=int)  # Frequency of delayed policy updates
@@ -72,16 +76,7 @@ if __name__ == "__main__":
     plot_path = 'logs/%s/%s' % (args.method,time_dir)
 
     # Store the parameter of test
-    hp_log = {}
-    hp_log['critic_lr'] = hp.critic_lr
-    hp_log['actor_lr'] = hp.actor_lr
-    hp_log['actor_feature_lr'] = hp.actor_feature_lr
-    hp_log['aux_lr'] = hp.aux_lr
-    hp_log['weight_decay'] = hp.weight_decay
-    hp_log['time_dir'] = time_dir
-    hp_log['method'] = args.method
-    hp_log['seed'] = args.seed
-    utils.write_log(hp_log, flags_log)
+    utils.write_log(args, flags_log)
     localtime = time.asctime(time.localtime(time.time()))
     utils.write_log(localtime, flags_log)
 
@@ -108,13 +103,13 @@ if __name__ == "__main__":
 
     # Initialize policy
     if args.method == "TD3_MC":
-        policy = TD3_MC.TD3_MC(state_dim, action_dim, max_action)
+        policy = TD3_MC.TD3_MC(state_dim, action_dim, max_action, args)
     elif args.method == "TD3_MC_sa":
-        policy = TD3_MC_sa.TD3_MC_sa(state_dim, action_dim, max_action)
+        policy = TD3_MC_sa.TD3_MC_sa(state_dim, action_dim, max_action, args)
     elif args.method == "DDPG_MC":
-        policy = DDPG_MC.DDPG_MC(state_dim, action_dim, max_action)
+        policy = DDPG_MC.DDPG_MC(state_dim, action_dim, max_action, args)
     elif args.method == "DDPG_MC_sa":
-        policy = DDPG_MC_sa.DDPG_MC_sa(state_dim, action_dim, max_action)
+        policy = DDPG_MC_sa.DDPG_MC_sa(state_dim, action_dim, max_action, args)
 
     utils.write_log(str(policy.feature_critic), flags_log)
     utils.write_log(str(policy.omega_optim), flags_log)

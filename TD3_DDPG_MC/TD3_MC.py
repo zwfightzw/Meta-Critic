@@ -1,15 +1,11 @@
-import numpy as np
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 import torch.nn.functional as F
 from utils import Critic_Network, Hot_Plug
-from hparams import HyperParams as hp
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Meta-Critic of Twin Delayed Deep Deterministic Policy Gradients (TD3_MC)
-
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, max_action):
         super(Actor, self).__init__()
@@ -67,26 +63,27 @@ class Critic(nn.Module):
         return x1
 
 class TD3_MC(object):
-    def __init__(self, state_dim, action_dim, max_action):
+    def __init__(self, state_dim, action_dim, max_action, args):
         self.actor = Actor(state_dim, action_dim, max_action).to(device)
         self.actor_target = Actor(state_dim, action_dim, max_action).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=hp.actor_lr)
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=args.actor_lr)
 
         self.actor_feature = Actor_Feature(state_dim, action_dim, max_action).to(device)
         self.actor_feature_target = Actor_Feature(state_dim, action_dim, max_action).to(device)
         self.actor_feature_target.load_state_dict(self.actor_feature.state_dict())
-        self.actor_feature_optimizer = torch.optim.Adam(self.actor_feature.parameters(), lr=hp.actor_feature_lr)
+        self.actor_feature_optimizer = torch.optim.Adam(self.actor_feature.parameters(), lr=args.actor_feature_lr)
 
         self.critic = Critic(state_dim, action_dim).to(device)
         self.critic_target = Critic(state_dim, action_dim).to(device)
         self.critic_target.load_state_dict(self.critic.state_dict())
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters())
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=args.critic_lr)
 
         self.feature_critic = Critic_Network(300).to(device)
-        self.omega_optim = torch.optim.Adam(self.feature_critic.parameters(), lr=hp.aux_lr, weight_decay=hp.weight_decay)
+        self.omega_optim = torch.optim.Adam(self.feature_critic.parameters(), lr=args.aux_lr, weight_decay=args.weight_decay)
         feature_net = nn.Sequential(*list(self.actor_feature.children())[:-1])
         self.hotplug = Hot_Plug(feature_net)
+        self.lr_actor = args.actor_lr
 
         self.max_action = max_action
         self.loss_store = []
@@ -141,13 +138,13 @@ class TD3_MC(object):
                 state_feature = self.actor_feature(state)
                 # Compute actor loss
                 actor_loss = -self.critic.Q1(state, self.actor(state_feature)).mean()
-                loss_auxiliary = hp.beta * self.feature_critic(state_feature)
+                loss_auxiliary = self.feature_critic(state_feature)
 
                 self.actor_optimizer.zero_grad()
                 self.actor_feature_optimizer.zero_grad()
                 # Part1 of Meta-test stage
                 actor_loss.backward(retain_graph=True)
-                self.hotplug.update(hp.actor_feature_lr)
+                self.hotplug.update(self.lr_actor)
                 state_feature_val = self.actor_feature(state_val)
                 policy_loss_val = self.critic.Q1(state_val, self.actor(state_feature_val))
                 policy_loss_val = -policy_loss_val.mean()
@@ -155,7 +152,7 @@ class TD3_MC(object):
 
                 # Part2 of Meta-test stage
                 loss_auxiliary.backward(create_graph=True)
-                self.hotplug.update(hp.actor_feature_lr)
+                self.hotplug.update(self.lr_actor)
                 state_feature_val_new = self.actor_feature(state_val)
                 policy_loss_val_new = self.critic.Q1(state_val, self.actor(state_feature_val_new))
                 policy_loss_val_new = -policy_loss_val_new.mean()

@@ -1,4 +1,3 @@
-import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -153,13 +152,11 @@ class SAC_MC_sa(object):
 
         self.omega_optim.zero_grad()
         grad_omega = torch.autograd.grad(loss_meta, self.feature_critic.parameters())
-        # print(grad_omega)
         for gradient, variable in zip(grad_omega, self.feature_critic.parameters()):
             variable.grad.data = gradient
         self.omega_optim.step()
 
         self.policy_optim.step()
-        # print('loss aux is %f, loss meta is %f.'%(loss_auxiliary, utility))
         self.hotplug.restore()
 
         if self.automatic_entropy_tuning:
@@ -170,10 +167,6 @@ class SAC_MC_sa(object):
             self.alpha_optim.step()
 
             self.alpha = self.log_alpha.exp()
-            alpha_tlogs = self.alpha.clone()  # For TensorboardX logs
-        else:
-            alpha_loss = torch.tensor(0.).to(self.device)
-            alpha_tlogs = torch.tensor(self.alpha)  # For TensorboardX logs
 
         if updates % self.target_update_interval == 0:
             soft_update(self.critic_target, self.critic, self.tau)

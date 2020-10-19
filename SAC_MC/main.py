@@ -1,5 +1,4 @@
 import argparse
-import datetime
 import gym
 import numpy as np
 import itertools
@@ -36,7 +35,7 @@ parser.add_argument('--lr_critic', type=float, default=0.0003, metavar='G',
 parser.add_argument('--lr_aux', type=float, default=0.001, metavar='G',
                     help='learning rate (default: 0.001)')
 parser.add_argument('--weight_decay_aux', type=float, default=1e-4, metavar='G',
-                    help='learning rate (default: 0.0001)')
+                    help='weight decay (default: 0.0001)')
 parser.add_argument('--alpha', type=float, default=0.2, metavar='G',
                     help='Temperature parameter α determines the relative importance of the entropy term against the reward (default: 0.2)')
 parser.add_argument('--automatic_entropy_tuning', type=bool, default=True, metavar='G',
@@ -64,6 +63,9 @@ args = parser.parse_args()
 
 # Set the GPU id
 torch.cuda.set_device(args.gpu_id)
+torch.manual_seed(args.seed)
+np.random.seed(args.seed)
+
 # Environment
 if args.env_name == 'HalfCheetahEnv':
     env= HalfCheetahEnv()
@@ -78,8 +80,6 @@ else:
     env = gym.make(args.env_name)
     env.seed(args.seed)
 
-torch.manual_seed(args.seed)
-np.random.seed(args.seed)
 # save results
 now = datetime.datetime.now(dateutil.tz.tzlocal())
 time_dir = now.strftime('%Y_%m_%d_%H_%M_%s')
@@ -88,6 +88,7 @@ if not os.path.exists('logs/%s/%s/' % (args.policy, file_dir)):
     os.makedirs('logs/%s/%s/' % (args.policy, file_dir))
 if not os.path.exists('model_output/%s/%s/' % (args.policy, file_dir)):
     os.makedirs('model_output/%s/%s/' % (args.policy, file_dir))
+
 # Archive log information
 flags_log = os.path.join('logs/%s/%s/' % (args.policy, file_dir), 'log.txt')
 # Save the parameter of networks
@@ -102,14 +103,9 @@ if args.method =='SAC_MC_sa':
     agent = SAC_MC_sa(env.observation_space.shape[0], env.action_space, args)
 
 # Restore the algorithm setting
-utils.write_log('calculate the average gradient of policy', flags_log)
 utils.write_log(args, flags_log)
 utils.write_log(agent.policy_optim,flags_log)
-utils.write_log(agent.critic_optim,flags_log)
-if args.method =='SAC_MC_sa' or args.method =='SAC_MC':
-    utils.write_log(agent.omega_optim, flags_log)
-else:
-    utils.write_log(agent.opt_meta_reg, flags_log)
+
 # Memory
 memory = ReplayMemory(args.replay_size)
 
@@ -117,9 +113,7 @@ memory = ReplayMemory(args.replay_size)
 total_numsteps = 0
 updates = 0
 
-exploration_reward = []
 evaluation_reward = []
-update_information = []
 
 for i_episode in itertools.count(1):
     episode_reward = 0
@@ -138,7 +132,6 @@ for i_episode in itertools.count(1):
             for i in range(args.updates_per_step):
                 # Update parameters of all the networks, and restore the loss information
                 update_info = agent.update_parameters(memory,args.batch_size,updates)
-                update_information.append(update_info)
                 updates += 1
 
         next_state, reward, done, _ = env.step(action) # Step
@@ -150,6 +143,7 @@ for i_episode in itertools.count(1):
         memory.push(state, action, reward, next_state, mask) # Append transition to memory
         state = next_state
 
+        # Evaluation
         if total_numsteps % 1000 == 0 and args.eval == True:
             avg_reward = 0.
             episodes = 10
@@ -177,11 +171,8 @@ for i_episode in itertools.count(1):
         break
 
     print("Episode: {}, total numsteps: {}, episode steps: {}, reward: {}".format(i_episode, total_numsteps, episode_steps, round(episode_reward, 2)))
-    exploration_reward.append(round(episode_reward,2))
 
 np.save('logs/%s/%s/evaluation_reward' % (args.policy, file_dir), evaluation_reward)
-np.save('logs/%s/%s/exploration_reward'% (args.policy, file_dir),exploration_reward)
-np.save('logs/%s/%s/update_information'% (args.policy, file_dir),update_information)
 actor_path = 'model_output/%s/%s/actor' % (args.policy, file_dir)
 critic_path = 'model_output/%s/%s/critic' % (args.policy, file_dir)
 fc_path = 'model_output/%s/%s/fc' % (args.policy, file_dir)
